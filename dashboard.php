@@ -38,6 +38,7 @@ include 'header.php';
                                 <th>Page</th>
                                 <th>Title</th>
                                 <th>Description</th>
+                                <th>Keywords</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -88,6 +89,7 @@ include 'header.php';
                             <td>${data.name || 'N/A'}</td>
                             <td>${data.title || 'N/A'}</td>
                             <td>${data.description || 'N/A'}</td>
+                            <td>${data.keywords || 'N/A'}</td>
                             <td>
                                 <a target='_blank' href='edit_metadata.php?id=${data.id}'>
                                     <button class="btn btn-sm btn-warning" title="Edit">

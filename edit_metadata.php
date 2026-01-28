@@ -50,6 +50,11 @@ $meta = json_decode($response, true);
                             placeholder="Enter description"><?= $meta['description']; ?></textarea>
                     </div>
                     <div class="form-group">
+                        <label for="keywords">Keywords <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="keywords" name="keywords"
+                            placeholder="Enter keywords"><?= $meta['keywords']; ?></textarea>
+                    </div>
+                    <div class="form-group">
                         <button type="submit" class="btn btn-primary" id="submitRefBtn">
                             <i class="fa fa-paper-plane"></i> Submit
                         </button>
@@ -72,6 +77,7 @@ $meta = json_decode($response, true);
             const page_id = $('#page_id').val().trim();
             const title = $('#title').val().trim();
             const description = $('#description').val().trim();
+            const keywords = $('#keywords').val().trim();
 
             // Clear previous messages
             $('#sendRefErrors').html("").hide();
@@ -88,7 +94,8 @@ $meta = json_decode($response, true);
                     body: JSON.stringify({
                         page_id,
                         title,
-                        description
+                        description,
+                        keywords
                     })
                 });
 
