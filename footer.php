@@ -1,6 +1,6 @@
-<footer class="main-footer">
+<!-- <footer class="main-footer">
     <strong>Copyright &copy; 2025 <a target="_blank" href="http://parcelhorse.com">Parcelhorse</a>.</strong> All rights reserved.
-</footer>
+</footer> -->
 
 <div class="control-sidebar-bg"></div>
 </div>
