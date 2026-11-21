@@ -9,13 +9,25 @@ class ApiClient
 {
     private $serverUrl;
     private $token;
+    private $apiKey;
 
     public function __construct()
     {
         $this->serverUrl = $_ENV['SERVER'] ?? "http://localhost:3000";
         $this->token = $_SESSION["token"] ?? "";
+        $this->apiKey = $_ENV["NODE_API_KEY"] ?? "";
     }
+    public function getVisitorIP()
+    {
+        $realIp = $_SERVER['REMOTE_ADDR'] ?? '';
 
+        if (filter_var($realIp, FILTER_VALIDATE_IP) === false) {
+            http_response_code(400);
+            exit('Invalid IP address');
+        }
+        return $realIp;
+
+    }
     public function getHost()
     {
         return $this->serverUrl;
@@ -39,7 +51,9 @@ class ApiClient
             CURLOPT_CUSTOMREQUEST => 'POST',
             CURLOPT_POSTFIELDS => $input,
             CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json'
+                'Content-Type: application/json',
+                'x-Real-Ip: ' . $this->getVisitorIP(),
+                'x-api-key: ' . $this->apiKey
             ),
         ));
         $response = curl_exec($curl);
@@ -70,7 +84,9 @@ class ApiClient
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'GET',
             CURLOPT_HTTPHEADER => array(
-                'Authorization: Bearer ' . $this->token
+                'Authorization: Bearer ' . $this->token,
+                'x-Real-Ip: ' . $this->getVisitorIP(),
+                'x-api-key: ' . $this->apiKey
             ),
         ));
 
@@ -105,7 +121,9 @@ class ApiClient
             CURLOPT_POSTFIELDS => $input,
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->token
+                'Authorization: Bearer ' . $this->token,
+                'x-Real-Ip: ' . $this->getVisitorIP(),
+                'x-api-key: ' . $this->apiKey
             ),
         ));
         $response = curl_exec($curl);
@@ -132,7 +150,9 @@ class ApiClient
             CURLOPT_CUSTOMREQUEST => 'GET',
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->token
+                'Authorization: Bearer ' . $this->token,
+                'x-Real-Ip: ' . $this->getVisitorIP(),
+                'x-api-key: ' . $this->apiKey
             ),
         ));
         $response = curl_exec($curl);
@@ -161,7 +181,9 @@ class ApiClient
             CURLOPT_POSTFIELDS => $input,
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->token
+                'Authorization: Bearer ' . $this->token,
+                'x-Real-Ip: ' . $this->getVisitorIP(),
+                'x-api-key: ' . $this->apiKey
             ),
         ));
         $response = curl_exec($curl);
@@ -186,7 +208,9 @@ class ApiClient
             CURLOPT_CUSTOMREQUEST => 'POST',
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->token
+                'Authorization: Bearer ' . $this->token,
+                'x-Real-Ip: ' . $this->getVisitorIP(),
+                'x-api-key: ' . $this->apiKey
             ),
         ));
         $response = curl_exec($curl);
@@ -214,7 +238,9 @@ class ApiClient
             CURLOPT_CUSTOMREQUEST => 'GET',
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->token
+                'Authorization: Bearer ' . $this->token,
+                'x-Real-Ip: ' . $this->getVisitorIP(),
+                'x-api-key: ' . $this->apiKey
             ),
         ));
         $response = curl_exec($curl);
@@ -239,7 +265,9 @@ class ApiClient
             CURLOPT_CUSTOMREQUEST => 'GET',
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->token
+                'Authorization: Bearer ' . $this->token,
+                'x-Real-Ip: ' . $this->getVisitorIP(),
+                'x-api-key: ' . $this->apiKey
             ),
         ));
         $response = curl_exec($curl);
@@ -267,7 +295,9 @@ class ApiClient
             CURLOPT_POSTFIELDS => $input,
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->token
+                'Authorization: Bearer ' . $this->token,
+                'x-Real-Ip: ' . $this->getVisitorIP(),
+                'x-api-key: ' . $this->apiKey
             ),
         ));
         $response = curl_exec($curl);
@@ -295,7 +325,9 @@ class ApiClient
             CURLOPT_POSTFIELDS => $input,
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->token
+                'Authorization: Bearer ' . $this->token,
+                'x-Real-Ip: ' . $this->getVisitorIP(),
+                'x-api-key: ' . $this->apiKey
             ),
         ));
         $response = curl_exec($curl);

@@ -89,7 +89,7 @@ if (session_status() === PHP_SESSION_NONE) {
       <div class="alert alert-danger" id="errors" style="display: none;"></div>
       <form id="loginForm">
         <div style="text-align: center; margin-bottom: 20px;">
-          <img src="../parcelhorse-admin/images/parcel-horse-vertical-logo.png" alt="Parcel Horse"
+          <img src="https://admin.parcelhorse.com/images/parcel-horse-vertical-logo.png" alt="Parcel Horse"
             style="max-height: 60px; margin-bottom: 10px;">
         </div>
         <div class="form-group has-feedback">
