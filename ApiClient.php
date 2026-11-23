@@ -48,8 +48,8 @@ class ApiClient
             $postFields = $data;
         }
 
-        if (!empty($this->sessionId)) {
-            $headers[] = 'x-session-id: ' . $this->sessionId;
+        if (!empty($this->session_id)) {
+            $headers[] = 'x-session-id: ' . $this->session_id;
         }
 
         $curl = curl_init();
