@@ -8,13 +8,13 @@ include 'loadenv.php';
 class ApiClient
 {
     private $serverUrl;
-    private $token;
+    private $session_id;
     private $apiKey;
 
     public function __construct()
     {
         $this->serverUrl = $_ENV['SERVER'] ?? "http://localhost:3000";
-        $this->token = $_SESSION["token"] ?? "";
+        $this->session_id = $_SESSION["session_id"] ?? "";
         $this->apiKey = $_ENV["NODE_API_KEY"] ?? "";
     }
     public function getVisitorIP()
@@ -32,67 +32,65 @@ class ApiClient
     {
         return $this->serverUrl;
     }
+    public function request($endpoint, $data, $method)
+    {
+        $headers = [
+            'x-Real-Ip: ' . $this->getVisitorIP(),
+            'x-api-key: ' . $this->apiKey,
+        ];
 
-    // Vendor Login
+        if (is_array($data)) {
+            // Form data
+            $postFields = $data;
+        } else {
+            // JSON data
+            $headers[] = 'Content-Type: application/json';
+            $postFields = $data;
+        }
+
+        if (!empty($this->sessionId)) {
+            $headers[] = 'x-session-id: ' . $this->sessionId;
+        }
+
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $endpoint,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => $method,
+            CURLOPT_POSTFIELDS => $postFields,
+            CURLOPT_HTTPHEADER => $headers,
+        ));
+        
+        $response = curl_exec($curl);
+        $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        http_response_code($statusCode);
+
+        return [$response, $statusCode];
+    }
+
     public function login()
     {
         $input = file_get_contents("php://input");
-
-        $curl = curl_init();
-
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $this->serverUrl . '/api/seo/login',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => $input,
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                'x-Real-Ip: ' . $this->getVisitorIP(),
-                'x-api-key: ' . $this->apiKey
-            ),
-        ));
-        $response = curl_exec($curl);
-        $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
+        [$response, $statusCode] = $this->request($this->serverUrl . '/api/seo/login', $input, "POST");
 
         if ($statusCode == 200) {
             $result = json_decode($response, true);
-            $_SESSION['token'] = $result['token'];
+            $_SESSION['session_id'] = $result['session_id'];
         }
 
-        http_response_code($statusCode);
         echo $response;
     }
 
-    // Check if vendor is logged in
-    public function is_vendor_logged_in()
+
+    public function is_logged_in()
     {
-        $curl = curl_init();
-
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $this->serverUrl . '/api/vendor/is_logged_in',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'GET',
-            CURLOPT_HTTPHEADER => array(
-                'Authorization: Bearer ' . $this->token,
-                'x-Real-Ip: ' . $this->getVisitorIP(),
-                'x-api-key: ' . $this->apiKey
-            ),
-        ));
-
-        $response = curl_exec($curl);
-        $status_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
+        [$response, $status_code] = $this->request($this->serverUrl . '/api/seo/logged_in', [], 'GET');
 
         if ($status_code != 200) {
             header("Location: index.php");
@@ -107,59 +105,15 @@ class ApiClient
     {
         $input = file_get_contents("php://input");
 
-        $curl = curl_init();
+        [$response] = $this->request($this->serverUrl . '/api/meta', $input, "POST");
 
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $this->serverUrl . '/api/meta',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => $input,
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->token,
-                'x-Real-Ip: ' . $this->getVisitorIP(),
-                'x-api-key: ' . $this->apiKey
-            ),
-        ));
-        $response = curl_exec($curl);
-        $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
-
-        http_response_code($statusCode);
         echo $response;
     }
 
-    // Get Vendor References
     public function getSeoList()
     {
-        $curl = curl_init();
+        [$response] = $this->request($this->serverUrl . '/api/meta', [], "GET");
 
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $this->serverUrl . '/api/meta',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'GET',
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->token,
-                'x-Real-Ip: ' . $this->getVisitorIP(),
-                'x-api-key: ' . $this->apiKey
-            ),
-        ));
-        $response = curl_exec($curl);
-        $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
-
-        http_response_code($statusCode);
         echo $response;
     }
 
@@ -167,57 +121,16 @@ class ApiClient
     {
         $input = file_get_contents("php://input");
 
-        $curl = curl_init();
+        [$response] = $this->request($this->serverUrl . '/api/change_password', $input, "POST");
 
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $this->serverUrl . '/api/change_password',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => $input,
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->token,
-                'x-Real-Ip: ' . $this->getVisitorIP(),
-                'x-api-key: ' . $this->apiKey
-            ),
-        ));
-        $response = curl_exec($curl);
-        $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
-
-        http_response_code($statusCode);
         echo $response;
     }
     public function logout()
     {
-        $curl = curl_init();
-
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $this->serverUrl . '/api/logout',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->token,
-                'x-Real-Ip: ' . $this->getVisitorIP(),
-                'x-api-key: ' . $this->apiKey
-            ),
-        ));
-        $response = curl_exec($curl);
-        curl_close($curl);
+        [$response, $statusCode] = $this->request($this->serverUrl . '/api/logout', [], "POST");
 
         $result = json_decode($response, true);
-        $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
         if ($statusCode == 200) {
             header("Location: index.php?message=" . urlencode($result['message']));
             exit();
@@ -225,116 +138,30 @@ class ApiClient
     }
     public function getPages()
     {
-        $curl = curl_init();
+        [$response] = $this->request($this->serverUrl . '/api/pages', [], "GET");
 
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $this->serverUrl . '/api/pages',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'GET',
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->token,
-                'x-Real-Ip: ' . $this->getVisitorIP(),
-                'x-api-key: ' . $this->apiKey
-            ),
-        ));
-        $response = curl_exec($curl);
-        $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
-
-        http_response_code($statusCode);
         return $response;
     }
     public function getMetadata($id)
     {
-        $curl = curl_init();
+        [$response] = $this->request($this->serverUrl . '/api/meta/' . $id, [], "GET");
 
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $this->serverUrl . '/api/meta/' . $id,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'GET',
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->token,
-                'x-Real-Ip: ' . $this->getVisitorIP(),
-                'x-api-key: ' . $this->apiKey
-            ),
-        ));
-        $response = curl_exec($curl);
-        $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
-
-        http_response_code($statusCode);
         return $response;
     }
     public function updateMetadata($id)
     {
         $input = file_get_contents("php://input");
 
-        $curl = curl_init();
+        [$response] = $this->request($this->serverUrl . '/api/meta/' . $id, $input, "PUT");
 
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $this->serverUrl . '/api/meta/' . $id,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'PUT',
-            CURLOPT_POSTFIELDS => $input,
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->token,
-                'x-Real-Ip: ' . $this->getVisitorIP(),
-                'x-api-key: ' . $this->apiKey
-            ),
-        ));
-        $response = curl_exec($curl);
-        $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
-
-        http_response_code($statusCode);
         echo $response;
     }
     public function deleteMetadata($id)
     {
         $input = file_get_contents("php://input");
 
-        $curl = curl_init();
+        [$response] = $this->request($this->serverUrl . '/api/meta/' . $id, $input, "DELETE");
 
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $this->serverUrl . '/api/meta/' . $id,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'DELETE',
-            CURLOPT_POSTFIELDS => $input,
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->token,
-                'x-Real-Ip: ' . $this->getVisitorIP(),
-                'x-api-key: ' . $this->apiKey
-            ),
-        ));
-        $response = curl_exec($curl);
-        $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
-
-        http_response_code($statusCode);
         echo $response;
     }
 }

@@ -1,17 +1,12 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 ini_set('session.gc_maxlifetime', 86400); // 24 hours
 
 include("./ApiClient.php");
 
 $client = new ApiClient();
-// $response = $client->is_vendor_logged_in();
-// $result = json_decode($response, true);
-// $name = $result['name'] ?? "";
-// $username = $result['username'] ?? "";
+$response = $client->is_logged_in();
+$result = json_decode($response, true);
+$name = $result['name'] ?? "";
 
 $page = basename($_SERVER['PHP_SELF'], ".php");
 
