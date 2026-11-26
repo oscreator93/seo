@@ -123,6 +123,11 @@ $meta = json_decode($response, true);
                     setTimeout(() => {
                         $('#sendRefSuccess').fadeOut();
                     }, 5000);
+
+                    if (window.opener && !window.opener.closed) {
+                        window.opener.location.reload();
+                    }
+                    window.close();
                 } else {
                     if (res.error) {
                         $('#sendRefErrors').html(res.error).show();

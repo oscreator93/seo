@@ -55,6 +55,9 @@ include 'header.php';
 
 <?php include 'footer.php'; ?>
 <script>
+    function editMetadata(url) {
+        window.open(url);
+    }
     $(function () {
         // Load references on page load
         loadReferences();
@@ -95,7 +98,7 @@ include 'header.php';
                             <td>${data.canonical || 'N/A'}</td>
                             <td>${data.google_schema || 'N/A'}</td>
                             <td>
-                                <a target='_blank' href='edit_metadata.php?id=${data.id}'>
+                                <a target='_blank' onclick="editMetadata('edit_metadata.php?id=${data.id}')">
                                     <button class="btn btn-sm btn-warning" title="Edit">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </button>
