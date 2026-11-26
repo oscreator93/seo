@@ -39,6 +39,8 @@ include 'header.php';
                                 <th>Title</th>
                                 <th>Description</th>
                                 <th>Keywords</th>
+                                <th>Canonical</th>
+                                <th>Schema</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -90,6 +92,8 @@ include 'header.php';
                             <td>${data.title || 'N/A'}</td>
                             <td>${data.description || 'N/A'}</td>
                             <td>${data.keywords || 'N/A'}</td>
+                            <td>${data.canonical || 'N/A'}</td>
+                            <td>${data.google_schema || 'N/A'}</td>
                             <td>
                                 <a target='_blank' href='edit_metadata.php?id=${data.id}'>
                                     <button class="btn btn-sm btn-warning" title="Edit">

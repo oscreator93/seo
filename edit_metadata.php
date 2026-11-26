@@ -55,6 +55,16 @@ $meta = json_decode($response, true);
                             placeholder="Enter keywords"><?= $meta['keywords']; ?></textarea>
                     </div>
                     <div class="form-group">
+                        <label for="keywords">Canonical <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="canonical" name="header"
+                            placeholder="Enter canonical"><?= $meta['canonical']; ?></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="keywords">Schema <span class="text-danger">*</span></label>
+                        <textarea class="form-control" rows="10" id="google_schema" name="body"
+                            placeholder="Enter schema"><?= $meta['google_schema']; ?></textarea>
+                    </div>
+                    <div class="form-group">
                         <button type="submit" class="btn btn-primary" id="submitRefBtn">
                             <i class="fa fa-paper-plane"></i> Submit
                         </button>
@@ -78,6 +88,8 @@ $meta = json_decode($response, true);
             const title = $('#title').val().trim();
             const description = $('#description').val().trim();
             const keywords = $('#keywords').val().trim();
+            const canonical = $('#canonical').val().trim();
+            const google_schema = $('#google_schema').val().trim();
 
             // Clear previous messages
             $('#sendRefErrors').html("").hide();
@@ -95,7 +107,9 @@ $meta = json_decode($response, true);
                         page_id,
                         title,
                         description,
-                        keywords
+                        keywords,
+                        canonical,
+                        google_schema
                     })
                 });
 
@@ -123,6 +137,9 @@ $meta = json_decode($response, true);
                 console.error('Error:', err);
                 $('#sendRefErrors').html('Network error. Please try again.').show();
             } finally {
+                document.querySelector(".content").scrollIntoView({
+                    behavior: "smooth"
+                });
                 submitBtn.html(originalText).prop('disabled', false);
             }
         });
