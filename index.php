@@ -2,7 +2,8 @@
 if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
-?>
+include 'loadenv.php'
+  ?>
 <!DOCTYPE html>
 <html>
 
@@ -93,8 +94,7 @@ if (session_status() === PHP_SESSION_NONE) {
             style="max-height: 60px; margin-bottom: 10px;">
         </div>
         <div class="form-group has-feedback">
-          <input type="text" name="email" id="email" class="form-control" placeholder="Email"
-            autocomplete="email">
+          <input type="text" name="email" id="email" class="form-control" placeholder="Email" autocomplete="email">
           <span class="glyphicon glyphicon-user form-control-feedback"></span>
         </div>
         <div class="form-group has-feedback has-password-toggle">
@@ -120,6 +120,20 @@ if (session_status() === PHP_SESSION_NONE) {
 
   <script src="./bower_components/jquery/dist/jquery.min.js"></script>
   <script src="./bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+  <!-- Set reCAPTCHA Site Key before loading scripts -->
+  <script>
+    <?php if (!empty($GOOGLE_RECAPTCHA_SITE_KEY)): ?>
+      window.recaptchaSiteKey = "<?php echo htmlspecialchars($GOOGLE_RECAPTCHA_SITE_KEY, ENT_QUOTES, 'UTF-8'); ?>";
+    <?php else: ?>
+      window.recaptchaSiteKey = "";
+      console.error("reCAPTCHA Site Key is not configured. Please check your .env file.");
+    <?php endif; ?>
+  </script>
+  <!-- Load reCAPTCHA script first (only if site key exists) -->
+  <?php if (!empty($GOOGLE_RECAPTCHA_SITE_KEY)): ?>
+    <script
+      src="https://www.google.com/recaptcha/api.js?render=<?php echo htmlspecialchars($GOOGLE_RECAPTCHA_SITE_KEY, ENT_QUOTES, 'UTF-8'); ?>"></script>
+  <?php endif; ?>
   <script>
     $(function () {
       // Password toggle
@@ -150,39 +164,66 @@ if (session_status() === PHP_SESSION_NONE) {
         const originalText = submitBtn.html();
         submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Signing In...').prop('disabled', true);
 
-        $('#loginForm').addClass('loading');
-
-        try {
-          const response = await fetch(`bridge.php?mode=login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: email,
-              password: password
-            })
-          });
-
-          if (response.ok) {
-            window.location.href = "dashboard.php";
-          } else {
-            const res = await response.json();
-            if (res.error) {
-              $('#errors').html(res.error).show();
-            } else if (res.errors) {
-              $('#errors').html("<ul>");
-              for (let err of res.errors) {
-                $('#errors').append(`<li>${err}</li>`);
-              }
-              $('#errors').append("</ul>").show();
-            }
-          }
-        } catch (err) {
-          console.error("Error:", err);
-          $('#errors').html("Network error or server unreachable.").show();
-        } finally {
-          submitBtn.html(originalText).prop("disabled", false);
-          $('#loginForm').removeClass('loading');
+        // Check if reCAPTCHA is available
+        if (typeof grecaptcha === 'undefined' || typeof window.recaptchaSiteKey === 'undefined') {
+          $("#errors").html("reCAPTCHA failed to load. Please refresh the page and try again.").show();
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+          return;
         }
+
+        // Validate site key before proceeding
+        if (!window.recaptchaSiteKey || window.recaptchaSiteKey.trim() === '') {
+          $("#errors").html("reCAPTCHA is not configured. Please contact support.").show();
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+          return;
+        }
+
+        grecaptcha.ready(function () {
+          grecaptcha.execute(window.recaptchaSiteKey, { action: 'submit' }).then(async function (recaptchaToken) {
+            // Validate token before sending
+            if (!recaptchaToken || recaptchaToken.trim() === '') {
+              $("#errors").html("reCAPTCHA token generation failed. Please refresh and try again.").show();
+              submitBtn.innerHTML = originalText;
+              submitBtn.disabled = false;
+              return;
+            }
+
+            try {
+              const response = await fetch(`bridge.php?mode=login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  email,
+                  password,
+                  recaptchaToken
+                })
+              });
+
+              if (response.ok) {
+                window.location.href = "dashboard.php";
+              } else {
+                const res = await response.json();
+                if (res.error) {
+                  $('#errors').html(res.error).show();
+                } else if (res.errors) {
+                  $('#errors').html("<ul>");
+                  for (let err of res.errors) {
+                    $('#errors').append(`<li>${err}</li>`);
+                  }
+                  $('#errors').append("</ul>").show();
+                }
+              }
+            } catch (err) {
+              console.error("Error:", err);
+              $('#errors').html("Network error or server unreachable.").show();
+            } finally {
+              submitBtn.html(originalText).prop("disabled", false);
+              $('#loginForm').removeClass('loading');
+            }
+          });
+        });
       });
     });
   </script>
